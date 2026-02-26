@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Videx - Free Video Platform</title>
+    <style>
+        :root {
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f8f9fa;
+            --color-bg-hover: #e9ecef;
+            --color-text-primary: #212529;
+            --color-text-secondary: #6c757d;
+            --color-accent: #000000;
+            --color-accent-hover: #333333;
+            --color-success: #198754;
+            --color-error: #dc3545;
+            --border-color: #dee2e6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--color-bg-primary); color: var(--color-text-primary); overflow-x: hidden; }
+        .header { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: var(--color-bg-primary); border-bottom: 2px solid var(--border-color); display: flex; align-items: center; padding: 0 20px; gap: 20px; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .logo { font-size: 24px; font-weight: bold; color: var(--color-accent); cursor: pointer; }
+        .search-bar { flex: 1; max-width: 600px; display: flex; gap: 10px; }
+        .search-bar input { flex: 1; padding: 10px 15px; background: var(--color-bg-primary); border: 2px solid var(--border-color); border-radius: 20px; color: var(--color-text-primary); font-size: 14px; }
+        .search-bar input:focus { outline: none; border-color: var(--color-accent); }
+        .btn { padding: 10px 20px; background: var(--color-accent); color: var(--color-bg-primary); border: none; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 14px; transition: background 0.2s; }
+        .btn:hover { background: var(--color-accent-hover); }
+        .btn-secondary { background: transparent; border: 1px solid var(--color-accent); color: var(--color-accent); }
+        .btn-secondary:hover { background: rgba(0,0,0,0.05); }
+        .btn-danger { background: var(--color-error); color: white; border: none; }
+        .btn-danger:hover { background: #b02a37; }
+        .profile-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--color-accent); color: var(--color-bg-primary); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; transition: transform 0.2s; overflow: hidden; border: 2px solid var(--color-accent); }
+        .profile-avatar:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-preview { width: 120px; height: 120px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 48px; overflow: hidden; border: 3px solid var(--border-color); }
+        .avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .upload-btn-label { display: block; width: 100%; padding: 12px; background: var(--color-bg-hover); border: 2px dashed var(--border-color); border-radius: 8px; cursor: pointer; text-align: center; transition: all 0.3s; color: var(--color-text-primary); font-weight: 600; }
+        .upload-btn-label:hover { border-color: var(--color-accent); background: rgba(0,0,0,0.05); }
+        .sidebar { position: fixed; top: 60px; left: 0; width: 240px; height: calc(100vh - 60px); background: var(--color-bg-primary); border-right: 2px solid var(--border-color); padding: 20px 0; overflow-y: auto; }
+        .sidebar-item { padding: 12px 24px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; gap: 12px; color: var(--color-text-secondary); }
+        .sidebar-item:hover, .sidebar-item.active { background: var(--color-bg-hover); color: var(--color-text-primary); }
+        .sidebar-divider { height: 1px; background: var(--border-color); margin: 12px 24px; }
+        .main-content { margin-left: 240px; margin-top: 60px; padding: 24px; min-height: calc(100vh - 60px); }
+        .section-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: var(--color-text-primary); }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .video-card { cursor: pointer; transition: transform 0.2s; }
+        .video-card:hover { transform: translateY(-4px); }
+        .video-thumbnail { position: relative; width: 100%; padding-top: 56.25%; background: var(--color-bg-hover); border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
+        .video-thumbnail img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .video-duration { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+        .video-info { padding: 12px 0; }
+        .video-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 4px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .video-channel { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 2px; }
+        .video-stats { font-size: 12px; color: var(--color-text-secondary); }
+        .shorts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 40px; }
+        .short-card { cursor: pointer; transition: transform 0.2s; }
+        .short-card:hover { transform: translateY(-4px); }
+        .short-thumbnail { position: relative; width: 100%; padding-top: 177.78%; background: var(--color-bg-hover); border-radius: 12px; overflow: hidden; }
+        .short-thumbnail img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .short-views { position: absolute; bottom: 8px; left: 8px; color: white; font-size: 12px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+        .short-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); margin-top: 8px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .shorts-viewer { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; z-index: 200; overflow: hidden; }
+        .shorts-viewer.active { display: block; }
+        .shorts-container { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; }
+        .shorts-container::-webkit-scrollbar { display: none; }
+        .short-slide { height: 100vh; width: 100%; scroll-snap-align: start; position: relative; display: flex; align-items: center; justify-content: center; background: #000; }
+        .short-video-player { max-width: 100%; max-height: 100vh; width: auto; height: 100%; object-fit: contain; }
+        .short-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 80px 20px 40px; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%); color: white; pointer-events: none; }
+        .short-overlay-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+        .short-overlay-channel { font-size: 14px; opacity: 0.9; margin-bottom: 4px; }
+        .short-overlay-stats { font-size: 13px; opacity: 0.8; }
+        .short-actions { position: absolute; right: 20px; bottom: 120px; display: flex; flex-direction: column; gap: 24px; pointer-events: auto; }
+        .short-action-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; background: none; border: none; color: white; cursor: pointer; font-size: 28px; transition: transform 0.2s; }
+        .short-action-btn:active { transform: scale(0.9); }
+        .short-action-label { font-size: 12px; font-weight: 600; }
+        .close-shorts { position: fixed; top: 20px; left: 20px; width: 40px; height: 40px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; color: white; font-size: 24px; cursor: pointer; z-index: 201; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .close-shorts:hover { background: rgba(255,255,255,0.3); }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 200; overflow-y: auto; }
+        .modal.active { display: block; }
+        .modal-content { max-width: 1400px; margin: 0 auto; padding: 80px 20px 40px; }
+        .player-container { position: relative; width: 100%; max-width: 1200px; margin: 0 auto 24px; }
+        .video-player { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 8px; }
+        .video-details { max-width: 1200px; margin: 0 auto; padding: 20px; background: var(--color-bg-primary); border-radius: 12px; border: 2px solid var(--border-color); }
+        .video-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 20px; }
+        .video-header-left { flex: 1; }
+        .video-main-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+        .video-meta { display: flex; gap: 16px; color: var(--color-text-secondary); font-size: 14px; }
+        .video-actions { display: flex; gap: 12px; }
+        .action-btn { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--color-bg-hover); border: none; border-radius: 20px; color: var(--color-text-primary); cursor: pointer; font-size: 14px; transition: background 0.2s; }
+        .action-btn:hover { background: rgba(0,0,0,0.1); }
+        .channel-section { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-top: 2px solid var(--border-color); border-bottom: 2px solid var(--border-color); }
+        .channel-info { display: flex; gap: 12px; align-items: center; }
+        .channel-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--color-accent); display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
+        .channel-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .channel-name { font-size: 15px; font-weight: 600; }
+        .channel-subs { font-size: 12px; color: var(--color-text-secondary); }
+        .support-buttons { display: flex; gap: 12px; }
+        .btn-donate { background: var(--color-success); color: white; }
+        .btn-donate:hover { background: #16a34a; }
+        .btn-subscribe { background: var(--color-accent); color: var(--color-bg-primary); }
+        .video-description { padding: 16px 0; font-size: 14px; line-height: 1.6; color: var(--color-text-secondary); }
+        .close-modal { position: fixed; top: 20px; right: 20px; width: 40px; height: 40px; background: rgba(255,255,255,0.1); border: none; border-radius: 50%; color: white; font-size: 24px; cursor: pointer; z-index: 201; display: flex; align-items: center; justify-content: center; }
+        .close-modal:hover { background: rgba(255,255,255,0.2); }
+        .upload-area { padding: 60px 20px; text-align: center; border: 3px dashed var(--border-color); border-radius: 12px; margin-bottom: 24px; cursor: pointer; transition: all 0.3s; }
+        .upload-area:hover { border-color: var(--color-accent); background: var(--color-bg-hover); }
+        .upload-area.has-file { cursor: default; border-color: var(--color-success); background: rgba(25,135,84,0.05); }
+        .upload-area.has-file:hover { border-color: var(--color-success); background: rgba(25,135,84,0.05); }
+        .upload-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; }
+        .form-input, .form-textarea, .form-select { width: 100%; padding: 12px; background: var(--color-bg-primary); border: 2px solid var(--border-color); border-radius: 8px; color: var(--color-text-primary); font-size: 14px; font-family: inherit; }
+        .form-textarea { min-height: 100px; resize: vertical; }
+        .form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: var(--color-accent); }
+        .file-info-bar { display: none; background: var(--color-bg-hover); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; align-items: center; justify-content: space-between; gap: 12px; }
+        .file-info-bar.visible { display: flex; }
+        .menu-toggle { display: none; width: 40px; height: 40px; background: transparent; border: none; color: var(--color-text-primary); font-size: 24px; cursor: pointer; align-items: center; justify-content: center; }
+        /* Progress bar */
+        .progress-wrap { display: none; margin-bottom: 20px; }
+        .progress-wrap.visible { display: block; }
+        .progress-bar-bg { width: 100%; height: 10px; background: var(--color-bg-hover); border-radius: 99px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: var(--color-accent); border-radius: 99px; transition: width 0.2s; }
+        .progress-label { font-size: 12px; color: var(--color-text-secondary); margin-top: 6px; text-align: center; }
+        /* Storage info */
+        .storage-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; background: var(--color-bg-hover); font-size: 12px; color: var(--color-text-secondary); margin-bottom: 16px; }
+        @media (max-width: 768px) {
+            .menu-toggle { display: flex; order: 3; margin-left: auto; }
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; z-index: 150; box-shadow: 2px 0 8px rgba(0,0,0,0.2); }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .video-grid { grid-template-columns: 1fr; gap: 16px; }
+            .shorts-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .search-bar { display: none; }
+            .header { padding: 0 12px; gap: 8px; justify-content: space-between; }
+            .logo { font-size: 18px; order: 1; }
+            .btn { padding: 8px 12px; font-size: 13px; }
+            .header .btn:not(.btn-secondary) { order: 2; }
+            .btn-secondary { display: none; }
+            .profile-avatar { order: 2; width: 36px; height: 36px; font-size: 18px; }
+            .video-header { flex-direction: column; }
+            .video-actions { width: 100%; flex-wrap: wrap; }
+            .channel-section { flex-direction: column; gap: 16px; align-items: flex-start; }
+            .support-buttons { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="logo" onclick="showHome()">🎬 Videx</div>
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search videos..." onkeydown="if(event.key==='Enter') searchVideos()">
+        <button class="btn" onclick="searchVideos()">Search</button>
+    </div>
+    <button class="btn" onclick="showUploadModal()">+ Upload</button>
+    <div class="profile-avatar" onclick="showProfileModal()" id="headerAvatar">M</div>
+    <button class="menu-toggle" onclick="toggleMobileMenu()">☰</button>
+</div>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-item active" onclick="showSection('home')"><span>🏠</span> Home</div>
+    <div class="sidebar-item" onclick="showSection('shorts')"><span>📱</span> Shorts</div>
+    <div class="sidebar-item" onclick="showSection('trending')"><span>🔥</span> Trending</div>
+    <div class="sidebar-item" onclick="showSection('subscriptions')"><span>📺</span> Subscriptions</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-item" onclick="showSection('library')"><span>📚</span> Library</div>
+    <div class="sidebar-item" onclick="showSection('history')"><span>🕐</span> History</div>
+    <div class="sidebar-item" onclick="showSection('liked')"><span>👍</span> Liked Videos</div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-item" onclick="showSection('donations')"><span>💰</span> Support Creators</div>
+</div>
+
+<div class="main-content" id="mainContent">
+    <div id="homeSection">
+        <h2 class="section-title">Recommended Videos</h2>
+        <div class="video-grid" id="videoGrid"></div>
+    </div>
+    <div id="shortsSection" style="display:none;">
+        <h2 class="section-title">Shorts</h2>
+        <div class="shorts-grid" id="shortsGrid"></div>
+    </div>
+    <div id="trendingSection" style="display:none;">
+        <h2 class="section-title">🔥 Trending</h2>
+        <div class="video-grid" id="trendingGrid"></div>
+    </div>
+    <div id="subscriptionsSection" style="display:none;">
+        <h2 class="section-title">📺 Subscriptions</h2>
+        <div id="subscriptionsList"></div>
+        <h3 class="section-title" style="margin-top:32px;">Latest uploads</h3>
+        <div class="video-grid" id="subscriptionsGrid"></div>
+    </div>
+    <div id="librarySection" style="display:none;">
+        <h2 class="section-title">📚 Your Library</h2>
+        <div class="video-grid" id="libraryGrid"></div>
+    </div>
+    <div id="historySection" style="display:none;">
+        <h2 class="section-title">🕐 Watch History</h2>
+        <button class="btn btn-secondary" onclick="clearHistory()" style="margin-bottom:16px;">Clear History</button>
+        <div class="video-grid" id="historyGrid"></div>
+    </div>
+    <div id="likedSection" style="display:none;">
+        <h2 class="section-title">👍 Liked Videos</h2>
+        <div class="video-grid" id="likedGrid"></div>
+    </div>
+    <div id="donationsSection" style="display:none;">
+        <h2 class="section-title">💰 Your Donations</h2>
+        <div id="donationsList"></div>
+    </div>
+</div>
+
+<!-- Video Player Modal -->
+<div class="modal" id="videoModal">
+    <button class="close-modal" onclick="closeVideoModal()">✕</button>
+    <div class="modal-content">
+        <div class="player-container">
+            <video class="video-player" id="videoPlayer" controls></video>
+        </div>
+        <div class="video-details">
+            <div class="video-header">
+                <div class="video-header-left">
+                    <h1 class="video-main-title" id="modalVideoTitle"></h1>
+                    <div class="video-meta">
+                        <span id="modalVideoViews">0 views</span>
+                        <span id="modalVideoDate">Today</span>
+                    </div>
+                </div>
+                <div class="video-actions">
+                    <button class="action-btn" id="likeBtn" onclick="likeVideo()"><span>👍</span> <span id="likeCount">0</span></button>
+                    <button class="action-btn" onclick="shareVideo()"><span>🔗</span> Share</button>
+                    <button class="action-btn" onclick="deleteCurrentVideo()" style="color:var(--color-error)"><span>🗑️</span> Delete</button>
+                </div>
+            </div>
+            <div class="channel-section">
+                <div class="channel-info">
+                    <div class="channel-avatar" id="modalChannelAvatar">V</div>
+                    <div>
+                        <div class="channel-name" id="modalChannelName"></div>
+                        <div class="channel-subs" id="modalChannelSubs">0 subscribers</div>
+                    </div>
+                </div>
+                <div class="support-buttons">
+                    <button class="btn btn-donate" onclick="donateToCreator()">💝 Donate</button>
+                    <button class="btn btn-subscribe" id="subscribeBtn" onclick="subscribeChannel()">Subscribe</button>
+                </div>
+            </div>
+            <div class="video-description" id="modalVideoDescription"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal" id="profileModal">
+    <button class="close-modal" onclick="closeProfileModal()">✕</button>
+    <div class="modal-content">
+        <div class="video-details">
+            <h2 class="section-title">Your Profile</h2>
+            <div class="form-group">
+                <label class="form-label">Profile Picture</label>
+                <div class="avatar-preview" id="avatarPreview" style="background:#000000;">M</div>
+                <label for="avatarUpload" class="upload-btn-label">📸 Upload Profile Picture</label>
+                <input type="file" id="avatarUpload" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+                <p style="text-align:center;color:var(--color-text-secondary);font-size:12px;margin-top:8px;">Or type an emoji / letter below</p>
+                <input type="text" class="form-input" id="profileAvatarText" maxlength="2" placeholder="🎮 or A" style="margin-top:8px;" oninput="handleAvatarTextInput()">
+                <button class="btn btn-secondary" onclick="removeAvatar()" style="margin-top:8px;width:100%;">🗑️ Remove Picture</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Channel Name</label>
+                <input type="text" class="form-input" id="profileChannelName" placeholder="My Channel">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Banner Color</label>
+                <select class="form-select" id="profileBannerColor">
+                    <option value="#000000">Black</option>
+                    <option value="#dc3545">Red</option>
+                    <option value="#198754">Green</option>
+                    <option value="#0d6efd">Blue</option>
+                    <option value="#6f42c1">Purple</option>
+                    <option value="#fd7e14">Orange</option>
+                    <option value="#d63384">Pink</option>
+                    <option value="#20c997">Turquoise</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Channel Description</label>
+                <textarea class="form-textarea" id="profileDescription" placeholder="Tell us about yourself..."></textarea>
+            </div>
+            <button class="btn" onclick="saveProfile()" style="width:100%;">Save Profile</button>
+        </div>
+    </div>
+</div>
+
+<!-- Donation Modal -->
+<div class="modal" id="donationModal">
+    <button class="close-modal" onclick="closeDonationModal()">✕</button>
+    <div class="modal-content">
+        <div class="video-details" style="max-width:500px;">
+            <h2 class="section-title" style="text-align:center;">💝 Support Creator</h2>
+            <div style="text-align:center;margin-bottom:24px;padding:20px;background:var(--color-bg-hover);border-radius:12px;">
+                <div style="font-size:48px;margin-bottom:12px;" id="donationChannelAvatar">V</div>
+                <h3 id="donationChannelName" style="margin-bottom:4px;"></h3>
+                <p style="color:var(--color-text-secondary);font-size:14px;">Your support helps creators keep going!</p>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Select Amount ($)</label>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
+                    <button class="btn btn-secondary" onclick="setDonationAmount(1)" style="padding:16px;">$1</button>
+                    <button class="btn btn-secondary" onclick="setDonationAmount(5)" style="padding:16px;">$5</button>
+                    <button class="btn btn-secondary" onclick="setDonationAmount(10)" style="padding:16px;">$10</button>
+                    <button class="btn btn-secondary" onclick="setDonationAmount(25)" style="padding:16px;">$25</button>
+                    <button class="btn btn-secondary" onclick="setDonationAmount(50)" style="padding:16px;">$50</button>
+                    <button class="btn btn-secondary" onclick="setDonationAmount(100)" style="padding:16px;">$100</button>
+                </div>
+                <label class="form-label" style="margin-top:16px;">Or enter custom amount</label>
+                <input type="number" class="form-input" id="customDonationAmount" placeholder="Enter amount" min="1" step="0.01">
+            </div>
+            <div style="display:flex;gap:12px;">
+                <button class="btn btn-secondary" onclick="closeDonationModal()" style="flex:1;">Cancel</button>
+                <button class="btn" onclick="confirmDonation()" style="flex:1;background:var(--color-success);">Donate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Shorts Viewer -->
+<div class="shorts-viewer" id="shortsViewer">
+    <button class="close-shorts" onclick="closeShortsViewer()">✕</button>
+    <div class="shorts-container" id="shortsContainer"></div>
+</div>
+
+<!-- Upload Modal -->
+<div class="modal" id="uploadModal">
+    <button class="close-modal" onclick="closeUploadModal()">✕</button>
+    <div class="modal-content">
+        <div class="video-details">
+            <h2 class="section-title">Upload New Video</h2>
+            <div class="storage-badge" id="storageBadge">💾 Checking storage...</div>
+            <div class="upload-area" id="uploadArea" onclick="triggerFileInput()">
+                <div class="upload-icon">📤</div>
+                <h3>Click to select a video file</h3>
+                <p style="color:var(--color-text-secondary);margin-top:8px;">Supports any size — stored locally via IndexedDB</p>
+            </div>
+            <input type="file" id="fileInput" accept="video/*" style="display:none;" onchange="handleFileSelect(event)">
+            <div class="file-info-bar" id="fileInfoBar">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:24px;">🎬</span>
+                    <div>
+                        <div id="fileInfoName" style="font-weight:600;font-size:14px;"></div>
+                        <div id="fileInfoSize" style="font-size:12px;color:var(--color-text-secondary);"></div>
+                    </div>
+                </div>
+                <button class="btn btn-danger" onclick="removeSelectedFile()" style="padding:8px 14px;font-size:13px;flex-shrink:0;">🗑️ Remove</button>
+            </div>
+            <!-- Progress bar (shown during save to IndexedDB) -->
+            <div class="progress-wrap" id="progressWrap">
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+                <div class="progress-label" id="progressLabel">Saving to IndexedDB...</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Content Type</label>
+                <select class="form-select" id="videoType">
+                    <option value="video">Regular Video</option>
+                    <option value="short">Short (vertical, max 60s)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-input" id="uploadTitle" placeholder="Enter video title">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-textarea" id="uploadDescription" placeholder="Describe your video..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tags</label>
+                <input type="text" class="form-input" id="uploadTags" placeholder="gaming, tutorial, funny (comma separated)">
+            </div>
+            <button class="btn" id="publishBtn" onclick="uploadVideo()" style="width:100%;">Publish Video</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  IndexedDB setup
+// ══════════════════════════════════════════════
+const DB_NAME = 'videx_db';
+const DB_VERSION = 1;
+const STORE_VIDEOS = 'videos';
+let db = null;
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        if (db) { resolve(db); return; }
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = e => {
+            const d = e.target.result;
+            if (!d.objectStoreNames.contains(STORE_VIDEOS)) {
+                d.createObjectStore(STORE_VIDEOS, { keyPath: 'id' });
+            }
+        };
+        req.onsuccess = e => { db = e.target.result; resolve(db); };
+        req.onerror = e => reject(e.target.error);
+    });
+}
+
+function dbSaveVideo(videoObj) {
+    return openDB().then(d => new Promise((resolve, reject) => {
+        const tx = d.transaction(STORE_VIDEOS, 'readwrite');
+        tx.objectStore(STORE_VIDEOS).put(videoObj);
+        tx.oncomplete = resolve;
+        tx.onerror = e => reject(e.target.error);
+    }));
+}
+
+function dbGetAllVideos() {
+    return openDB().then(d => new Promise((resolve, reject) => {
+        const tx = d.transaction(STORE_VIDEOS, 'readonly');
+        const req = tx.objectStore(STORE_VIDEOS).getAll();
+        req.onsuccess = e => resolve(e.target.result);
+        req.onerror = e => reject(e.target.error);
+    }));
+}
+
+function dbDeleteVideo(id) {
+    return openDB().then(d => new Promise((resolve, reject) => {
+        const tx = d.transaction(STORE_VIDEOS, 'readwrite');
+        tx.objectStore(STORE_VIDEOS).delete(id);
+        tx.oncomplete = resolve;
+        tx.onerror = e => reject(e.target.error);
+    }));
+}
+
+// Read File as ArrayBuffer with simulated progress
+function readFileWithProgress(file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        let lastUpdate = 0;
+        reader.onprogress = e => {
+            if (e.lengthComputable) {
+                const pct = Math.round((e.loaded / e.total) * 100);
+                if (pct !== lastUpdate) { lastUpdate = pct; onProgress(pct); }
+            }
+        };
+        reader.onload = e => { onProgress(100); resolve(e.target.result); };
+        reader.onerror = e => reject(e.target.error);
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+// ══════════════════════════════════════════════
+//  App state
+// ══════════════════════════════════════════════
+let allVideos = [], allShorts = [], currentVideo = null;
+let likedVideos = new Set(), subscribedChannels = new Set();
+let channelStats = {}, userDonations = [], watchHistory = [];
+let selectedFile = null, selectedFileURL = null;
+let currentShortIndex = 0;
+let userProfile = {
+    avatar: 'M', avatarType: 'text', avatarUrl: null,
+    channelName: 'My Channel', bannerColor: '#000000',
+    description: 'Welcome to my channel!'
+};
+
+// ══════════════════════════════════════════════
+//  Init
+// ══════════════════════════════════════════════
+async function init() {
+    loadUserData();
+    updateHeaderAvatar();
+    await loadVideosFromDB();
+    renderVideos();
+    renderShorts();
+}
+
+async function loadVideosFromDB() {
+    try {
+        const rows = await dbGetAllVideos();
+        allVideos = []; allShorts = [];
+        for (const row of rows) {
+            // Rebuild blob URL from stored ArrayBuffer
+            if (row.videoBuffer) {
+                const blob = new Blob([row.videoBuffer], { type: row.videoMime || 'video/mp4' });
+                row.videoUrl = URL.createObjectURL(blob);
+            }
+            if (row.type === 'short') allShorts.push(row);
+            else allVideos.push(row);
+        }
+        // Sort newest first
+        allVideos.sort((a, b) => b.id - a.id);
+        allShorts.sort((a, b) => b.id - a.id);
+    } catch(e) {
+        console.warn('IndexedDB load error:', e);
+    }
+}
+
+// ══════════════════════════════════════════════
+//  Storage estimate
+// ══════════════════════════════════════════════
+async function updateStorageBadge() {
+    const badge = document.getElementById('storageBadge');
+    if (!navigator.storage?.estimate) { badge.textContent = '💾 IndexedDB ready'; return; }
+    try {
+        const { usage, quota } = await navigator.storage.estimate();
+        const usedMB = (usage / 1024 / 1024).toFixed(1);
+        const quotaGB = (quota / 1024 / 1024 / 1024).toFixed(1);
+        badge.textContent = `💾 ${usedMB} MB used of ~${quotaGB} GB available`;
+    } catch { badge.textContent = '💾 IndexedDB ready'; }
+}
+
+// ══════════════════════════════════════════════
+//  LocalStorage (profile/likes/history only)
+// ══════════════════════════════════════════════
+function loadUserData() {
+    const saved = localStorage.getItem('videx_user_data');
+    if (saved) {
+        const d = JSON.parse(saved);
+        likedVideos = new Set(d.likedVideos || []);
+        subscribedChannels = new Set(d.subscribedChannels || []);
+        watchHistory = d.watchHistory || [];
+        userDonations = d.userDonations || [];
+        if (d.userProfile) userProfile = d.userProfile;
+    }
+}
+
+function saveUserData() {
+    localStorage.setItem('videx_user_data', JSON.stringify({
+        likedVideos: Array.from(likedVideos),
+        subscribedChannels: Array.from(subscribedChannels),
+        watchHistory, userDonations, userProfile
+    }));
+}
+
+// ══════════════════════════════════════════════
+//  Header avatar
+// ══════════════════════════════════════════════
+function updateHeaderAvatar() {
+    const el = document.getElementById('headerAvatar');
+    el.innerHTML = ''; el.style.background = userProfile.bannerColor;
+    if (userProfile.avatarType === 'image' && userProfile.avatarUrl) {
+        const img = document.createElement('img'); img.src = userProfile.avatarUrl; el.appendChild(img);
+    } else el.textContent = userProfile.avatar;
+}
+
+// ══════════════════════════════════════════════
+//  Channel stats
+// ══════════════════════════════════════════════
+function getOrCreateChannelStats(name) {
+    if (!channelStats[name]) channelStats[name] = { subscribers: 0, videos: [] };
+    return channelStats[name];
+}
+
+function updateChannelStats() {
+    channelStats = {};
+    [...allVideos, ...allShorts].forEach(v => {
+        const s = getOrCreateChannelStats(v.channel);
+        if (!s.videos.includes(v.id)) s.videos.push(v.id);
+    });
+    subscribedChannels.forEach(name => getOrCreateChannelStats(name).subscribers++);
+}
+
+// ══════════════════════════════════════════════
+//  Render helpers
+// ══════════════════════════════════════════════
+function makeVideoCard(video, isShort = false) {
+    const card = document.createElement('div');
+    card.className = isShort ? 'short-card' : 'video-card';
+    card.onclick = () => isShort ? openShortsViewer(allShorts.indexOf(video)) : openVideo(video);
+    if (isShort) {
+        card.innerHTML = `<div class="short-thumbnail"><img src="${video.thumbnail}" alt="${video.title}"><div class="short-views">${video.views} views</div></div><div class="short-title">${video.title}</div>`;
+    } else {
+        card.innerHTML = `<div class="video-thumbnail"><img src="${video.thumbnail}" alt="${video.title}"><div class="video-duration">${video.duration}</div></div><div class="video-info"><div class="video-title">${video.title}</div><div class="video-channel">${video.channel}</div><div class="video-stats">${video.views} views • ${video.date}</div></div>`;
+    }
+    return card;
+}
+
+function renderGrid(gridId, items, isShort, emptyIcon, emptyTitle, emptyMsg, emptyBtn = '') {
+    const grid = document.getElementById(gridId); grid.innerHTML = '';
+    if (!items.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;"><div style="font-size:48px;margin-bottom:16px;opacity:0.3;">${emptyIcon}</div><h3 style="margin-bottom:8px;">${emptyTitle}</h3><p style="color:var(--color-text-secondary);">${emptyMsg}</p>${emptyBtn}</div>`;
+        return;
+    }
+    items.forEach(v => grid.appendChild(makeVideoCard(v, isShort)));
+}
+
+function renderVideos() { renderGrid('videoGrid', allVideos, false, '📹', 'No videos yet', 'Upload the first video to get started!'); }
+function renderShorts() { renderGrid('shortsGrid', allShorts, true, '📱', 'No shorts yet', 'Upload the first short to get started!'); }
+
+// ══════════════════════════════════════════════
+//  Video player
+// ══════════════════════════════════════════════
+function openVideo(video) {
+    currentVideo = video; addToHistory(video);
+    const player = document.getElementById('videoPlayer');
+    player.src = video.videoUrl || '';
+    if (video.videoUrl) {
+        player.load(); let counted = false;
+        player.ontimeupdate = () => {
+            if (counted || !player.duration) return;
+            if ((player.currentTime / player.duration) * 100 >= 70) { incrementViews(video); counted = true; player.ontimeupdate = null; }
+        };
+    }
+    updateChannelStats();
+    const ch = channelStats[video.channel] || { subscribers: 0 };
+    document.getElementById('modalVideoTitle').textContent = video.title;
+    document.getElementById('modalVideoViews').textContent = `${video.views} views`;
+    document.getElementById('modalVideoDate').textContent = video.date;
+    document.getElementById('modalChannelName').textContent = video.channel;
+    document.getElementById('modalChannelSubs').textContent = `${ch.subscribers} subscribers`;
+    document.getElementById('modalVideoDescription').textContent = video.description;
+    document.getElementById('likeCount').textContent = video.likes;
+    const av = document.getElementById('modalChannelAvatar'); av.innerHTML = '';
+    av.style.background = video.channel === userProfile.channelName ? userProfile.bannerColor : '#000';
+    if (video.avatarType === 'image' && video.avatarUrl) { const img = document.createElement('img'); img.src = video.avatarUrl; av.appendChild(img); }
+    else av.textContent = video.channelAvatar || video.channel[0];
+    updateLikeButton(); updateSubscribeButton();
+    document.getElementById('videoModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeVideoModal() {
+    document.getElementById('videoModal').classList.remove('active');
+    document.getElementById('videoPlayer').pause();
+    document.body.style.overflow = 'auto';
+}
+
+async function deleteCurrentVideo() {
+    if (!currentVideo) return;
+    if (!confirm(`Delete "${currentVideo.title}"? This cannot be undone.`)) return;
+    await dbDeleteVideo(currentVideo.id);
+    allVideos = allVideos.filter(v => v.id !== currentVideo.id);
+    allShorts = allShorts.filter(v => v.id !== currentVideo.id);
+    renderVideos(); renderShorts();
+    closeVideoModal();
+}
+
+// ══════════════════════════════════════════════
+//  Shorts viewer
+// ══════════════════════════════════════════════
+function openShortsViewer(startIndex) {
+    const container = document.getElementById('shortsContainer'); container.innerHTML = '';
+    allShorts.forEach((short, index) => {
+        const slide = document.createElement('div'); slide.className = 'short-slide'; slide.setAttribute('data-index', index);
+        const vid = document.createElement('video'); vid.className = 'short-video-player'; vid.loop = true; vid.playsInline = true;
+        if (short.videoUrl) vid.src = short.videoUrl;
+        const overlay = document.createElement('div'); overlay.className = 'short-overlay';
+        overlay.innerHTML = `<div class="short-overlay-title">${short.title}</div><div class="short-overlay-channel">${short.channel}</div><div class="short-overlay-stats">${short.views} views • ${short.date||'Today'}</div>`;
+        const actions = document.createElement('div'); actions.className = 'short-actions';
+        actions.innerHTML = `<button class="short-action-btn" onclick="likeShort(${index});event.stopPropagation();"><span id="shortLike${index}">${likedVideos.has(short.id)?'❤️':'🤍'}</span><span class="short-action-label" id="shortLikeCount${index}">${short.likes||0}</span></button><button class="short-action-btn" onclick="shareShort(${index});event.stopPropagation();"><span>🔗</span><span class="short-action-label">Share</span></button>`;
+        slide.appendChild(vid); slide.appendChild(overlay); slide.appendChild(actions); container.appendChild(slide);
+    });
+    document.getElementById('shortsViewer').classList.add('active'); document.body.style.overflow = 'hidden';
+    setTimeout(() => { const t = container.querySelector(`[data-index="${startIndex}"]`); if (t) t.scrollIntoView(); currentShortIndex = startIndex; updateCurrentShort(); }, 100);
+    container.onscroll = handleShortsScroll;
+}
+
+function closeShortsViewer() {
+    document.querySelectorAll('.short-video-player').forEach(v => v.pause());
+    document.getElementById('shortsViewer').classList.remove('active'); document.body.style.overflow = 'auto';
+}
+
+function handleShortsScroll() {
+    const container = document.getElementById('shortsContainer');
+    container.querySelectorAll('.short-slide').forEach((slide, i) => {
+        const rect = slide.getBoundingClientRect();
+        if (rect.top >= 0 && rect.top < window.innerHeight / 2 && currentShortIndex !== i) { currentShortIndex = i; updateCurrentShort(); }
+    });
+}
+
+function updateCurrentShort() {
+    document.querySelectorAll('.short-video-player').forEach((vid, i) => {
+        if (i === currentShortIndex) {
+            vid.play().catch(() => {});
+            const short = allShorts[i];
+            if (short) { addToHistory(short); let counted = false; vid.ontimeupdate = () => { if (counted || !vid.duration) return; if ((vid.currentTime/vid.duration)*100>=70){incrementViews(short);counted=true;vid.ontimeupdate=null;} }; }
+        } else vid.pause();
+    });
+}
+
+function likeShort(index) {
+    const short = allShorts[index]; if (!short) return;
+    const isLiked = likedVideos.has(short.id);
+    if (isLiked) { likedVideos.delete(short.id); short.likes = Math.max(0,(short.likes||0)-1); }
+    else { likedVideos.add(short.id); short.likes = (short.likes||0)+1; }
+    document.getElementById(`shortLike${index}`).textContent = isLiked ? '🤍' : '❤️';
+    document.getElementById(`shortLikeCount${index}`).textContent = short.likes;
+    saveUserData();
+}
+
+function shareShort(index) { const s = allShorts[index]; if (s) copyToClipboard(`https://videx.example/short/${s.id}`); }
+
+// ══════════════════════════════════════════════
+//  Upload with IndexedDB
+// ══════════════════════════════════════════════
+function triggerFileInput() { if (!selectedFile) document.getElementById('fileInput').click(); }
+
+function handleFileSelect(event) {
+    const file = event.target.files[0]; if (!file) return;
+    if (selectedFileURL) URL.revokeObjectURL(selectedFileURL);
+    selectedFile = file; selectedFileURL = URL.createObjectURL(file);
+    const area = document.getElementById('uploadArea');
+    area.classList.add('has-file');
+    area.innerHTML = `<div style="font-size:40px;margin-bottom:8px;">✅</div><h3 style="color:var(--color-success);">File selected!</h3><p style="color:var(--color-text-secondary);font-size:13px;margin-top:4px;">Use Remove to change it</p>`;
+    document.getElementById('fileInfoName').textContent = file.name;
+    document.getElementById('fileInfoSize').textContent = `${(file.size/1024/1024).toFixed(2)} MB`;
+    document.getElementById('fileInfoBar').classList.add('visible');
+}
+
+function removeSelectedFile() {
+    if (selectedFileURL) { URL.revokeObjectURL(selectedFileURL); selectedFileURL = null; }
+    selectedFile = null; document.getElementById('fileInput').value = '';
+    const area = document.getElementById('uploadArea');
+    area.classList.remove('has-file');
+    area.innerHTML = `<div class="upload-icon">📤</div><h3>Click to select a video file</h3><p style="color:var(--color-text-secondary);margin-top:8px;">Supports any size — stored locally via IndexedDB</p>`;
+    document.getElementById('fileInfoBar').classList.remove('visible');
+    document.getElementById('progressWrap').classList.remove('visible');
+}
+
+function showUploadModal() { updateStorageBadge(); document.getElementById('uploadModal').classList.add('active'); document.body.style.overflow = 'hidden'; }
+
+function closeUploadModal() { resetUploadForm(); document.getElementById('uploadModal').classList.remove('active'); document.body.style.overflow = 'auto'; }
+
+function resetUploadForm() {
+    removeSelectedFile();
+    document.getElementById('uploadTitle').value = '';
+    document.getElementById('uploadDescription').value = '';
+    document.getElementById('uploadTags').value = '';
+    document.getElementById('videoType').value = 'video';
+    document.getElementById('publishBtn').disabled = false;
+    document.getElementById('publishBtn').textContent = 'Publish Video';
+}
+
+async function uploadVideo() {
+    const title = document.getElementById('uploadTitle').value.trim();
+    const description = document.getElementById('uploadDescription').value.trim();
+    const type = document.getElementById('videoType').value;
+    const tags = document.getElementById('uploadTags').value;
+    if (!title || !description) { alert('Please fill in title and description!'); return; }
+    if (!selectedFile) { alert('Please select a video file!'); return; }
+
+    // Check duration for shorts
+    const videoEl = document.createElement('video');
+    videoEl.src = selectedFileURL;
+    const dur = await new Promise(resolve => {
+        videoEl.onloadedmetadata = () => resolve(videoEl.duration);
+        videoEl.onerror = () => resolve(null);
+    });
+
+    if (type === 'short' && dur !== null && dur > 60) {
+        alert(`Shorts must be max 60s! Your file is ${Math.round(dur)}s.`); return;
+    }
+
+    // Lock UI
+    const btn = document.getElementById('publishBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    document.getElementById('progressWrap').classList.add('visible');
+
+    try {
+        // Generate thumbnail first
+        const thumbnail = await generateVideoThumbnail(videoEl);
+
+        // Read file into ArrayBuffer with progress
+        const buffer = await readFileWithProgress(selectedFile, pct => {
+            document.getElementById('progressFill').style.width = pct + '%';
+            document.getElementById('progressLabel').textContent = pct < 100 ? `Reading file... ${pct}%` : 'Saving to IndexedDB...';
+        });
+
+        const newVideo = {
+            id: Date.now(),
+            title, channel: userProfile.channelName,
+            channelAvatar: userProfile.avatar,
+            avatarType: userProfile.avatarType,
+            avatarUrl: userProfile.avatarUrl,
+            views: '0', date: new Date().toLocaleDateString('en-US'),
+            duration: dur ? formatDuration(dur) : '?:??',
+            thumbnail, description, likes: 0,
+            type,
+            videoMime: selectedFile.type || 'video/mp4',
+            videoBuffer: buffer,
+            tags: tags.split(',').map(t => t.trim()).filter(Boolean)
+        };
+
+        // Save to IndexedDB
+        await dbSaveVideo(newVideo);
+
+        // Create blob URL for immediate playback
+        const blob = new Blob([buffer], { type: newVideo.videoMime });
+        newVideo.videoUrl = URL.createObjectURL(blob);
+
+        getOrCreateChannelStats(userProfile.channelName);
+        if (type === 'short') { allShorts.unshift(newVideo); renderShorts(); }
+        else { allVideos.unshift(newVideo); renderVideos(); }
+
+        resetUploadForm();
+        updateStorageBadge();
+        alert(`${type === 'short' ? 'Short' : 'Video'} published! 🎉\nSaved to IndexedDB — will persist after refresh.`);
+    } catch(e) {
+        console.error(e);
+        alert('Error saving video: ' + e.message);
+        btn.disabled = false; btn.textContent = 'Publish Video';
+    }
+}
+
+function formatDuration(s) { const m = Math.floor(s/60), sec = Math.floor(s%60); return `${m}:${sec.toString().padStart(2,'0')}`; }
+
+function generateVideoThumbnail(videoEl) {
+    return new Promise(resolve => {
+        const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 180;
+        const ctx = canvas.getContext('2d');
+        const trySeek = () => {
+            videoEl.currentTime = Math.min(1, videoEl.duration || 0);
+            videoEl.addEventListener('seeked', () => { ctx.drawImage(videoEl, 0, 0, 320, 180); resolve(canvas.toDataURL('image/jpeg', 0.7)); }, { once: true });
+        };
+        if (videoEl.readyState >= 1) trySeek();
+        else videoEl.addEventListener('loadedmetadata', trySeek, { once: true });
+    });
+}
+
+// ══════════════════════════════════════════════
+//  Video actions
+// ══════════════════════════════════════════════
+function likeVideo() {
+    if (!currentVideo) return;
+    const id = currentVideo.id;
+    if (likedVideos.has(id)) { likedVideos.delete(id); currentVideo.likes = Math.max(0,currentVideo.likes-1); }
+    else { likedVideos.add(id); currentVideo.likes++; }
+    document.getElementById('likeCount').textContent = currentVideo.likes;
+    updateLikeButton(); saveUserData();
+}
+
+function updateLikeButton() {
+    if (!currentVideo) return;
+    const btn = document.getElementById('likeBtn'); const liked = likedVideos.has(currentVideo.id);
+    btn.style.background = liked ? 'var(--color-accent)' : 'var(--color-bg-hover)';
+    btn.style.color = liked ? 'var(--color-bg-primary)' : 'var(--color-text-primary)';
+}
+
+function shareVideo() { if (currentVideo) copyToClipboard(`https://videx.example/${currentVideo.id}`); }
+
+function copyToClipboard(text) {
+    navigator.clipboard?.writeText(text).then(() => alert(`Link copied!\n${text}`)).catch(() => {
+        const t = document.createElement('input'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); alert(`Link copied!\n${text}`);
+    });
+}
+
+function donateToCreator() {
+    if (!currentVideo) return;
+    document.getElementById('donationChannelName').textContent = currentVideo.channel;
+    const av = document.getElementById('donationChannelAvatar');
+    if (currentVideo.avatarType==='image'&&currentVideo.avatarUrl) av.innerHTML=`<img src="${currentVideo.avatarUrl}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">`;
+    else av.textContent = currentVideo.channelAvatar || currentVideo.channel[0];
+    document.getElementById('customDonationAmount').value = '';
+    document.getElementById('donationModal').classList.add('active'); document.body.style.overflow='hidden';
+}
+
+function closeDonationModal() { document.getElementById('donationModal').classList.remove('active'); document.body.style.overflow='auto'; }
+function setDonationAmount(a) { document.getElementById('customDonationAmount').value = a; }
+
+function confirmDonation() {
+    const amount = parseFloat(document.getElementById('customDonationAmount').value);
+    if (!amount || isNaN(amount) || amount < 1) { alert('Enter at least $1.'); return; }
+    if (confirm(`Donate $${amount.toFixed(2)} to ${currentVideo.channel}?`)) {
+        const tid = 'TXN' + Date.now();
+        userDonations.push({ id: tid, channelName: currentVideo.channel, amount, date: new Date().toLocaleDateString('en-US'), timestamp: Date.now() });
+        saveUserData(); closeDonationModal();
+        alert(`✅ Donation complete!\n💰 $${amount.toFixed(2)} → ${currentVideo.channel}\n📝 ${tid}`);
+    }
+}
+
+function subscribeChannel() {
+    if (!currentVideo) return; const name = currentVideo.channel;
+    if (subscribedChannels.has(name)) subscribedChannels.delete(name); else subscribedChannels.add(name);
+    updateChannelStats();
+    document.getElementById('modalChannelSubs').textContent = `${(channelStats[name]||{subscribers:0}).subscribers} subscribers`;
+    updateSubscribeButton(); saveUserData();
+}
+
+function updateSubscribeButton() {
+    if (!currentVideo) return;
+    const btn = document.getElementById('subscribeBtn');
+    const isOwn = currentVideo.channel === userProfile.channelName;
+    const isSub = subscribedChannels.has(currentVideo.channel);
+    if (isOwn) { btn.textContent='Your Channel'; btn.disabled=true; btn.style.opacity='0.5'; btn.style.cursor='not-allowed'; btn.style.background='var(--color-bg-hover)'; btn.style.color='var(--color-text-primary)'; }
+    else { btn.disabled=false; btn.style.opacity='1'; btn.style.cursor='pointer'; btn.textContent=isSub?'Subscribed ✓':'Subscribe'; btn.style.background=isSub?'var(--color-bg-hover)':'var(--color-accent)'; btn.style.color=isSub?'var(--color-text-primary)':'var(--color-bg-primary)'; }
+}
+
+// ══════════════════════════════════════════════
+//  Sections
+// ══════════════════════════════════════════════
+function showSection(section) {
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    if (event?.target) event.target.closest('.sidebar-item')?.classList.add('active');
+    ['home','shorts','trending','subscriptions','library','history','liked','donations'].forEach(s => document.getElementById(s+'Section').style.display='none');
+    document.getElementById(section+'Section').style.display='block';
+    if (section==='trending') renderTrending();
+    else if (section==='subscriptions') renderSubscriptions();
+    else if (section==='library') renderLibrary();
+    else if (section==='history') renderHistory();
+    else if (section==='liked') renderLiked();
+    else if (section==='donations') renderDonations();
+    if (window.innerWidth<=768) document.getElementById('sidebar').classList.remove('mobile-open');
+}
+
+function showHome() { showSection('home'); document.querySelectorAll('.sidebar-item')[0].classList.add('active'); }
+
+function searchVideos() {
+    const q = document.getElementById('searchInput').value.toLowerCase().trim();
+    if (!q) { renderVideos(); return; }
+    const found = allVideos.filter(v => v.title.toLowerCase().includes(q)||v.description.toLowerCase().includes(q)||v.channel.toLowerCase().includes(q)||(v.tags||[]).some(t=>t.toLowerCase().includes(q)));
+    renderGrid('videoGrid', found, false, '🔍', `No results for "${q}"`, 'Try different keywords');
+    ['shorts','trending','subscriptions','library','history','liked','donations'].forEach(s=>document.getElementById(s+'Section').style.display='none');
+    document.getElementById('homeSection').style.display='block';
+}
+
+function renderTrending() {
+    const sorted = [...allVideos].sort((a,b)=>(parseInt(b.views)||0)-(parseInt(a.views)||0)).slice(0,12);
+    renderGrid('trendingGrid', sorted, false, '🔥', 'No trending videos', 'Upload videos to see trends!');
+}
+
+function renderSubscriptions() {
+    const list = document.getElementById('subscriptionsList'), grid = document.getElementById('subscriptionsGrid');
+    list.innerHTML=''; grid.innerHTML=''; updateChannelStats();
+    if (!subscribedChannels.size) { list.innerHTML=`<div style="text-align:center;padding:60px 20px;background:var(--color-bg-hover);border-radius:12px;"><div style="font-size:48px;margin-bottom:16px;opacity:0.3;">📺</div><h3>No subscribed channels yet</h3></div>`; return; }
+    const cards = document.createElement('div'); cards.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px;';
+    subscribedChannels.forEach(name => {
+        const stats=channelStats[name]||{subscribers:0}; const vids=[...allVideos,...allShorts].filter(v=>v.channel===name); const first=vids[0];
+        const card=document.createElement('div'); card.style.cssText='background:var(--color-bg-hover);padding:20px;border-radius:12px;text-align:center;border:2px solid var(--border-color);';
+        const av=document.createElement('div'); av.style.cssText='width:80px;height:80px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:bold;overflow:hidden;';
+        av.style.background=first?.avatarType==='image'?'transparent':(userProfile.bannerColor||'#000');
+        if(first?.avatarType==='image'&&first?.avatarUrl){const img=document.createElement('img');img.src=first.avatarUrl;img.style.cssText='width:100%;height:100%;object-fit:cover;';av.appendChild(img);}else av.textContent=first?.channelAvatar||name[0];
+        card.innerHTML=`<div style="font-weight:600;margin-bottom:4px;">${name}</div><div style="font-size:12px;color:var(--color-text-secondary);">${stats.subscribers} subs • ${vids.length} videos</div>`;
+        card.insertBefore(av,card.firstChild); cards.appendChild(card);
+    });
+    list.appendChild(cards);
+    const subVids=[...allVideos,...allShorts].filter(v=>subscribedChannels.has(v.channel)).sort((a,b)=>b.id-a.id).slice(0,12);
+    if(subVids.length) subVids.forEach(v=>grid.appendChild(makeVideoCard(v,allShorts.includes(v))));
+    else grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px 20px;"><p style="color:var(--color-text-secondary);">No uploads from subscribed channels yet.</p></div>`;
+}
+
+function renderLibrary() {
+    const mine=[...allVideos,...allShorts].filter(v=>v.channel===userProfile.channelName);
+    renderGrid('libraryGrid',mine,false,'📚','No videos in library','Your uploaded videos appear here!',`<button class="btn" onclick="showUploadModal()" style="margin-top:16px;">+ Upload first video</button>`);
+}
+
+function renderHistory() {
+    const vids=watchHistory.map(id=>[...allVideos,...allShorts].find(v=>v.id===id)).filter(Boolean).reverse();
+    renderGrid('historyGrid',vids,false,'🕐','No watch history','Videos you watch will appear here!');
+}
+
+function renderLiked() {
+    const vids=[...allVideos,...allShorts].filter(v=>likedVideos.has(v.id));
+    renderGrid('likedGrid',vids,false,'👍','No liked videos','Videos you like will appear here!');
+}
+
+function addToHistory(video) {
+    if(!video?.id) return;
+    const i=watchHistory.indexOf(video.id); if(i>-1) watchHistory.splice(i,1);
+    watchHistory.push(video.id); if(watchHistory.length>50) watchHistory.shift(); saveUserData();
+}
+
+function clearHistory() { if(confirm('Clear all watch history?')){ watchHistory=[]; saveUserData(); renderHistory(); } }
+
+function incrementViews(video) {
+    if(!video) return; video.views=((parseInt(video.views)||0)+1).toString();
+    const el=document.getElementById('modalVideoViews'); if(el) el.textContent=`${video.views} views`;
+    renderVideos(); renderShorts();
+}
+
+function renderDonations() {
+    const list=document.getElementById('donationsList'); list.innerHTML='';
+    if(!userDonations.length){ list.innerHTML=`<div style="text-align:center;padding:60px 20px;background:var(--color-bg-hover);border-radius:12px;"><div style="font-size:48px;margin-bottom:16px;opacity:0.3;">💰</div><h3>No donations yet</h3></div>`; return; }
+    const total=userDonations.reduce((s,d)=>s+d.amount,0);
+    const header=document.createElement('div'); header.style.cssText='background:var(--color-bg-hover);padding:20px;border-radius:12px;margin-bottom:24px;text-align:center;';
+    header.innerHTML=`<h3 style="font-size:32px;margin-bottom:8px;">$${total.toFixed(2)}</h3><p style="color:var(--color-text-secondary);">Total donated to ${userDonations.length} creator${userDonations.length>1?'s':''}</p>`;
+    list.appendChild(header);
+    const cont=document.createElement('div'); cont.style.cssText='display:grid;gap:16px;';
+    [...userDonations].reverse().forEach(d=>{ const card=document.createElement('div'); card.style.cssText='background:var(--color-bg-hover);padding:20px;border-radius:12px;border:2px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;'; card.innerHTML=`<div><div style="font-weight:600;margin-bottom:4px;">${d.channelName}</div><div style="font-size:12px;color:var(--color-text-secondary);">${d.date} • ${d.id}</div></div><div style="font-size:24px;font-weight:bold;color:var(--color-success);">$${d.amount.toFixed(2)}</div>`; cont.appendChild(card); });
+    list.appendChild(cont);
+}
+
+// ══════════════════════════════════════════════
+//  Profile
+// ══════════════════════════════════════════════
+function showProfileModal() {
+    document.getElementById('profileAvatarText').value=userProfile.avatarType==='text'?userProfile.avatar:'';
+    document.getElementById('profileChannelName').value=userProfile.channelName;
+    document.getElementById('profileBannerColor').value=userProfile.bannerColor;
+    document.getElementById('profileDescription').value=userProfile.description;
+    updateAvatarPreview();
+    document.getElementById('profileModal').classList.add('active'); document.body.style.overflow='hidden';
+}
+
+function updateAvatarPreview() {
+    const p=document.getElementById('avatarPreview'); p.innerHTML=''; p.style.background=userProfile.bannerColor;
+    if(userProfile.avatarType==='image'&&userProfile.avatarUrl){const img=document.createElement('img');img.src=userProfile.avatarUrl;p.appendChild(img);}
+    else p.textContent=userProfile.avatar;
+}
+
+function handleAvatarUpload(event) {
+    const file=event.target.files[0]; if(!file) return;
+    if(file.size>5*1024*1024){alert('Max 5MB for profile picture');return;}
+    const reader=new FileReader();
+    reader.onload=e=>{userProfile.avatarType='image';userProfile.avatarUrl=e.target.result;userProfile.avatar='';document.getElementById('profileAvatarText').value='';updateAvatarPreview();};
+    reader.readAsDataURL(file);
+}
+
+function handleAvatarTextInput() {
+    const t=document.getElementById('profileAvatarText').value.trim();
+    if(t){userProfile.avatarType='text';userProfile.avatar=t;userProfile.avatarUrl=null;updateAvatarPreview();}
+}
+
+function removeAvatar() { userProfile.avatarType='text';userProfile.avatar='M';userProfile.avatarUrl=null;document.getElementById('profileAvatarText').value='M';document.getElementById('avatarUpload').value='';updateAvatarPreview(); }
+function closeProfileModal() { document.getElementById('profileModal').classList.remove('active'); document.body.style.overflow='auto'; }
+
+function saveProfile() {
+    const txt=document.getElementById('profileAvatarText').value.trim();
+    const name=document.getElementById('profileChannelName').value.trim();
+    const color=document.getElementById('profileBannerColor').value;
+    const desc=document.getElementById('profileDescription').value.trim();
+    if(!name){alert('Please enter a channel name!');return;}
+    if(txt){userProfile.avatarType='text';userProfile.avatar=txt;userProfile.avatarUrl=null;}
+    const old=userProfile.channelName; userProfile.channelName=name; userProfile.bannerColor=color; userProfile.description=desc;
+    [...allVideos,...allShorts].forEach(v=>{if(v.channel===old){v.channel=name;}if(v.channel===name){v.channelAvatar=userProfile.avatar;v.avatarType=userProfile.avatarType;v.avatarUrl=userProfile.avatarUrl;}});
+    if(subscribedChannels.has(old)){subscribedChannels.delete(old);subscribedChannels.add(name);}
+    saveUserData(); updateHeaderAvatar(); renderVideos(); renderShorts(); closeProfileModal(); alert('Profile saved! 🎉');
+}
+
+// ══════════════════════════════════════════════
+//  Mobile menu
+// ══════════════════════════════════════════════
+function toggleMobileMenu() { document.getElementById('sidebar').classList.toggle('mobile-open'); }
+document.addEventListener('click', e => {
+    const sb=document.getElementById('sidebar'), mt=document.querySelector('.menu-toggle');
+    if(window.innerWidth<=768&&sb.classList.contains('mobile-open')&&!sb.contains(e.target)&&!mt.contains(e.target)) sb.classList.remove('mobile-open');
+});
+
+init();
+</script>
+</body>
+</html>
