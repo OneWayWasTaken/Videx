@@ -1,18 +1,27 @@
-const express  = require('express');
-const multer   = require('multer');
-const cors     = require('cors');
-const path     = require('path');
-const fs       = require('fs');
+const express = require('express');
+const multer  = require('multer');
+const cors    = require('cors');
+const path    = require('path');
+const fs      = require('fs');
 const { v4: uuid } = require('uuid');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
-const THUMBS_DIR  = path.join(__dirname, 'thumbs');
-const DATA_FILE   = path.join(__dirname, 'data.json');
+const R2 = new S3Client({
+    region: 'auto',
+    endpoint: 'https://0eaa31084e65b21c7dca412936394253.r2.cloudflarestorage.com',
+    credentials: {
+        accessKeyId:     'd63d1e1c7a232fc249c88cdc354545ee',
+        secretAccessKey: '465d323dab40e2573cb6e49ced9f09fa31b43c8b7693824731bef79da0abf333'
+    }
+});
 
-[UPLOADS_DIR, THUMBS_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
+const BUCKET     = 'vindex-videos';
+const PUBLIC_URL = 'https://pub-f35fcf9876b64020aaa1ff83e8bc43c6.r2.dev';
+
+const DATA_FILE = path.join(__dirname, 'data.json');
 
 function readData() {
     if (!fs.existsSync(DATA_FILE)) return { videos: [], shorts: [] };
@@ -23,68 +32,59 @@ function writeData(data) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-const storage = multer.diskStorage({
-    destination: UPLOADS_DIR,
-    filename: (req, file, cb) => cb(null, uuid() + path.extname(file.originalname))
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 2 * 1024 * 1024 * 1024 }
 });
-const upload = multer({ storage, limits: { fileSize: 2 * 1024 * 1024 * 1024 } });
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use('/uploads', express.static(UPLOADS_DIR));
-app.use('/thumbs',  express.static(THUMBS_DIR));
 
 app.get('/api/videos', (req, res) => {
     const data = readData();
     res.json({ videos: data.videos, shorts: data.shorts });
 });
 
-app.post('/api/upload', upload.single('video'), (req, res) => {
+app.post('/api/upload', upload.single('video'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const { title, description, type, tags, duration, channel, channelAvatar, thumbnail } = req.body;
-    let thumbPath = '/placeholder.jpg';
-    if (thumbnail && thumbnail.startsWith('data:image')) {
-        const thumbName = uuid() + '.jpg';
-        const base64Data = thumbnail.replace(/^data:image\/\w+;base64,/, '');
-        fs.writeFileSync(path.join(THUMBS_DIR, thumbName), Buffer.from(base64Data, 'base64'));
-        thumbPath = `/thumbs/${thumbName}`;
-    }
-    const newVideo = {
-        id: uuid(), title: title || 'Untitled', description: description || '',
-        channel: channel || 'Anonymous', channelAvatar: channelAvatar || '👤',
-        views: '0', likes: 0, date: new Date().toLocaleDateString('it-IT'),
-        duration: duration || '0:00',
-        tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-        videoUrl: `/uploads/${req.file.filename}`,
-        thumbnail: thumbPath, type: type || 'video', uploadedAt: Date.now()
-    };
-    const data = readData();
-    if (type === 'short') data.shorts.unshift(newVideo);
-    else data.videos.unshift(newVideo);
-    writeData(data);
-    res.json({ success: true, video: newVideo });
-});
+    try {
+        const videoKey = `videos/${uuid()}${path.extname(req.file.originalname || '.mp4')}`;
+        await R2.send(new PutObjectCommand({
+            Bucket: BUCKET, Key: videoKey,
+            Body: req.file.buffer, ContentType: req.file.mimetype || 'video/mp4'
+        }));
 
-app.get('/api/stream/:filename', (req, res) => {
-    const filePath = path.join(UPLOADS_DIR, path.basename(req.params.filename));
-    if (!fs.existsSync(filePath)) return res.status(404).send('Not found');
-    const stat = fs.statSync(filePath);
-    const fileSize = stat.size;
-    const range = req.headers.range;
-    if (range) {
-        const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
-        const start = parseInt(startStr, 10);
-        const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
-        res.writeHead(206, {
-            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-            'Accept-Ranges': 'bytes',
-            'Content-Length': end - start + 1,
-            'Content-Type': 'video/mp4',
-        });
-        fs.createReadStream(filePath, { start, end }).pipe(res);
-    } else {
-        res.writeHead(200, { 'Content-Length': fileSize, 'Content-Type': 'video/mp4' });
-        fs.createReadStream(filePath).pipe(res);
+        let thumbUrl = '';
+        if (thumbnail && thumbnail.startsWith('data:image')) {
+            const thumbKey = `thumbs/${uuid()}.jpg`;
+            const base64Data = thumbnail.replace(/^data:image\/\w+;base64,/, '');
+            await R2.send(new PutObjectCommand({
+                Bucket: BUCKET, Key: thumbKey,
+                Body: Buffer.from(base64Data, 'base64'), ContentType: 'image/jpeg'
+            }));
+            thumbUrl = `${PUBLIC_URL}/${thumbKey}`;
+        }
+
+        const newVideo = {
+            id: uuid(), title: title || 'Untitled', description: description || '',
+            channel: channel || 'Anonymous', channelAvatar: channelAvatar || '👤',
+            views: '0', likes: 0, date: new Date().toLocaleDateString('it-IT'),
+            duration: duration || '0:00',
+            tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+            videoUrl: `${PUBLIC_URL}/${videoKey}`,
+            thumbnail: thumbUrl, type: type || 'video',
+            r2Key: videoKey, uploadedAt: Date.now()
+        };
+
+        const data = readData();
+        if (type === 'short') data.shorts.unshift(newVideo);
+        else data.videos.unshift(newVideo);
+        writeData(data);
+        res.json({ success: true, video: newVideo });
+    } catch(e) {
+        console.error('Upload error:', e);
+        res.status(500).json({ error: e.message });
     }
 });
 
@@ -104,20 +104,18 @@ app.post('/api/videos/:id/view', (req, res) => {
     writeData(data); res.json({ views: video.views });
 });
 
-app.delete('/api/videos/:id', (req, res) => {
+app.delete('/api/videos/:id', async (req, res) => {
     const data = readData();
-    const del = (arr) => {
+    const del = async (arr) => {
         const i = arr.findIndex(v => v.id === req.params.id);
         if (i === -1) return false;
-        const fname = path.basename(arr[i].videoUrl || '');
-        const fp = path.join(UPLOADS_DIR, fname);
-        if (fname && fs.existsSync(fp)) fs.unlinkSync(fp);
+        if (arr[i].r2Key) await R2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: arr[i].r2Key })).catch(console.error);
         arr.splice(i, 1); return true;
     };
-    if (!del(data.videos) && !del(data.shorts)) return res.status(404).json({ error: 'Not found' });
+    const found = await del(data.videos) || await del(data.shorts);
+    if (!found) return res.status(404).json({ error: 'Not found' });
     writeData(data); res.json({ success: true });
 });
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
-
 app.listen(PORT, () => console.log(`Videx backend running on port ${PORT}`));
