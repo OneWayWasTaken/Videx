@@ -337,7 +337,7 @@
             <div class="upload-area" id="uploadArea" onclick="triggerFileInput()">
                 <div class="upload-icon">📤</div>
                 <h3>Click to select a video file</h3>
-                <p style="color:var(--color-text-secondary);margin-top:8px;">Supports any size — stored locally via IndexedDB</p>
+                <p style="color:var(--color-text-secondary);margin-top:8px;">Supported: MP4, MOV, AVI, WebM — stored on server</p>
             </div>
             <input type="file" id="fileInput" accept="video/*" style="display:none;" onchange="handleFileSelect(event)">
             <div class="file-info-bar" id="fileInfoBar">
@@ -350,10 +350,10 @@
                 </div>
                 <button class="btn btn-danger" onclick="removeSelectedFile()" style="padding:8px 14px;font-size:13px;flex-shrink:0;">🗑️ Remove</button>
             </div>
-            <!-- Progress bar (shown during save to IndexedDB) -->
+            <!-- Progress bar upload -->
             <div class="progress-wrap" id="progressWrap">
                 <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
-                <div class="progress-label" id="progressLabel">Saving to IndexedDB...</div>
+                <div class="progress-label" id="progressLabel">Uploading to server...</div>
             </div>
             <div class="form-group">
                 <label class="form-label">Content Type</label>
@@ -384,7 +384,7 @@
 //  API Backend config
 // ══════════════════════════════════════════════
 // ⚠️ Sostituisci con l'URL del tuo Web Service Render dopo averlo creato
-const API_BASE = 'https://videx-backend-ddym.onrender.com';
+const API_BASE = 'https://videx-backend.onrender.com';
 
 // ══════════════════════════════════════════════
 //  App state
@@ -625,7 +625,7 @@ function likeShort(index) {
 function shareShort(index) { const s = allShorts[index]; if (s) copyToClipboard(`https://videx.example/short/${s.id}`); }
 
 // ══════════════════════════════════════════════
-//  Upload with IndexedDB
+//  Upload
 // ══════════════════════════════════════════════
 function triggerFileInput() { if (!selectedFile) document.getElementById('fileInput').click(); }
 
@@ -646,7 +646,7 @@ function removeSelectedFile() {
     selectedFile = null; document.getElementById('fileInput').value = '';
     const area = document.getElementById('uploadArea');
     area.classList.remove('has-file');
-    area.innerHTML = `<div class="upload-icon">📤</div><h3>Click to select a video file</h3><p style="color:var(--color-text-secondary);margin-top:8px;">Supports any size — stored locally via IndexedDB</p>`;
+    area.innerHTML = `<div class="upload-icon">📤</div><h3>Click to select a video file</h3><p style="color:var(--color-text-secondary);margin-top:8px;">Supported: MP4, MOV, AVI, WebM — stored on server</p>`;
     document.getElementById('fileInfoBar').classList.remove('visible');
     document.getElementById('progressWrap').classList.remove('visible');
 }
